@@ -1,0 +1,5 @@
+C:/Users/Lenovo/OneDrive - Dalhousie University/Dal stuff/DSS Rocketry Stuff/Avionics Development/Rocket_IMU_F411RE/CMakeFiles/Rocket_IMU_F411RE.dir
+C:/Users/Lenovo/OneDrive - Dalhousie University/Dal stuff/DSS Rocketry Stuff/Avionics Development/Rocket_IMU_F411RE/CMakeFiles/edit_cache.dir
+C:/Users/Lenovo/OneDrive - Dalhousie University/Dal stuff/DSS Rocketry Stuff/Avionics Development/Rocket_IMU_F411RE/CMakeFiles/rebuild_cache.dir
+C:/Users/Lenovo/OneDrive - Dalhousie University/Dal stuff/DSS Rocketry Stuff/Avionics Development/Rocket_IMU_F411RE/cmake/stm32cubemx/CMakeFiles/edit_cache.dir
+C:/Users/Lenovo/OneDrive - Dalhousie University/Dal stuff/DSS Rocketry Stuff/Avionics Development/Rocket_IMU_F411RE/cmake/stm32cubemx/CMakeFiles/rebuild_cache.dir
