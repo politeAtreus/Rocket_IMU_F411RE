@@ -21,7 +21,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -63,6 +65,36 @@ static void MX_SPI1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+void lsm6dsr_writereg(SPI_HandleTypeDef *hspi, GPIO_TypeDef* CS_PORT, uint16_t CS_PIN, uint8_t reg, uint8_t data){
+  uint8_t txbuffer[2];
+  txbuffer[0] = reg & 0x7f;   // 0x7f is 01111111, which is the write bit
+  txbuffer[1] = data;
+
+  HAL_GPIO_WritePin(CS_PORT, CS_PIN, GPIO_PIN_RESET);
+  HAL_SPI_Transmit(hspi, txbuffer, 2, HAL_MAX_DELAY);
+  HAL_GPIO_WritePin(CS_PORT, CS_PIN, GPIO_PIN_SET);
+}
+
+uint8_t lsm6dsr_readreg(SPI_HandleTypeDef *hspi, GPIO_TypeDef* CS_PORT, uint16_t CS_PIN, uint8_t reg){
+  uint8_t txbuffer[2];
+  uint8_t rxbuffer[2];
+  txbuffer[0] = reg | 0x80;   // 0x80 is 10000000, which is the read bit
+  txbuffer[1] = 0;
+
+  HAL_GPIO_WritePin(CS_PORT, CS_PIN, GPIO_PIN_RESET);
+  HAL_SPI_TransmitReceive(hspi, txbuffer, rxbuffer, 2, HAL_MAX_DELAY);
+  HAL_GPIO_WritePin(CS_PORT, CS_PIN, GPIO_PIN_SET);
+
+  return rxbuffer[1];
+}
+
+// To redirect the printf to output to the UART instead so I can see it in putty
+int __io_putchar(int ch)
+{
+    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+    return ch;
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -101,8 +133,15 @@ int main(void)
 
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
 
-  int pulse = 10;
-  int increment = 1;
+  int increment = 5000;
+
+  // Contains the value read from the specified register
+  uint8_t whoami = 0;
+
+  // This contains debug messages to send to the UART
+  char* msg = 0;
+  int correct = 0;
+  int incorrect = 0;
 
   /* USER CODE END 2 */
 
@@ -111,17 +150,18 @@ int main(void)
   while (1)
   {
     
-    for(increment=10000;increment<=400000;increment++){
     __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, increment);
+
+    whoami = lsm6dsr_readreg(&hspi1, Chip_Select_GPIO_Port, Chip_Select_Pin, 0x0f);
+
+    if (whoami == 0x6b){
+      printf("Success! Who am I register value: 0x%x\r\n", whoami);
+      correct ++;
     }
-
-    HAL_Delay(500);
-
-    for(increment=400000;increment>=10000;increment--){
-    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, increment);
+    else {
+      printf("Error! Who am I register value: 0x%x\r\n", whoami);
+      incorrect ++;
     }
-
-    HAL_Delay(500);
 
     /* USER CODE END WHILE */
 
@@ -235,9 +275,9 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 0;
+  htim2.Init.Prescaler = 20-1;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 1000000-1;
+  htim2.Init.Period = 100000-1;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
