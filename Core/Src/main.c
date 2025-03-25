@@ -95,6 +95,50 @@ int __io_putchar(int ch)
     return ch;
 }
 
+/*
+================
+SERVO FUNCTIONS
+================
+*/
+void Servo_SetAngle(TIM_HandleTypeDef *htim, uint32_t Channel, float angle)
+{
+    // angle range: -90 to +90 degrees
+    float pulse_length_ms = ((angle + 90.0f) / 180.0f) * 1.0f + 1.0f; // maps [-90,+90] to [1ms,2ms]
+
+    // Convert pulse length in ms to timer counts (0.2us resolution)
+    uint32_t pulse_counts = (uint32_t)(pulse_length_ms * 5000.0f);
+
+    __HAL_TIM_SET_COMPARE(htim, Channel, pulse_counts);
+}
+
+void Servo_Sweep_Demo(TIM_HandleTypeDef *htim, uint32_t Channel)
+{
+    const int delay_ms = 20;  // Adjust this for speed of sweep
+    float angle;
+
+    // 0° to -90°
+    for (angle = 0; angle >= -90; angle -= 1.0f) {
+        Servo_SetAngle(htim, Channel, angle);
+        HAL_Delay(delay_ms);
+    }
+
+    HAL_Delay(500);
+
+    // -90° to +90°
+    for (angle = -90; angle <= 90; angle += 1.0f) {
+        Servo_SetAngle(htim, Channel, angle);
+        HAL_Delay(delay_ms);
+    }
+
+    HAL_Delay(500);
+
+    // +90° back to 0°
+    for (angle = 90; angle >= 0; angle -= 1.0f) {
+        Servo_SetAngle(htim, Channel, angle);
+        HAL_Delay(delay_ms);
+    }
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -133,7 +177,7 @@ int main(void)
 
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
 
-  int increment = 5000;
+  int increment = 7500;
 
   // Contains the value read from the specified register
   uint8_t whoami = 0;
@@ -150,7 +194,7 @@ int main(void)
   while (1)
   {
     
-    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, increment);
+    Servo_Sweep_Demo(&htim2, TIM_CHANNEL_2);
 
     whoami = lsm6dsr_readreg(&hspi1, Chip_Select_GPIO_Port, Chip_Select_Pin, 0x0f);
 
